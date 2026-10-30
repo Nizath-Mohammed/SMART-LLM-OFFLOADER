@@ -19,6 +19,7 @@ interface UseAgentsResult {
   createAgent: (name: string, systemPrompt?: string) => Promise<void>;
   renameAgent: (agentId: string, name: string) => Promise<void>;
   updateSystemPrompt: (agentId: string, systemPrompt: string) => Promise<void>;
+  updateAgentConfig: (agentId: string, config: { modelRef?: string | null }) => Promise<void>;
   deleteAgent: (agentId: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -81,6 +82,18 @@ export function useAgents(): UseAgentsResult {
     }
   }, [refresh]);
 
+  const updateAgentConfig = useCallback(async (agentId: string, config: { modelRef?: string | null }): Promise<void> => {
+    try {
+      await apiClient<AgentResponse>(`/agents/${agentId}/config`, {
+        method: 'PATCH',
+        body: JSON.stringify(config),
+      });
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+    }
+  }, [refresh]);
+
   const deleteAgent = useCallback(async (agentId: string): Promise<void> => {
     try {
       await apiClient<{ message: string }>(`/agents/${agentId}`, {
@@ -92,5 +105,5 @@ export function useAgents(): UseAgentsResult {
     }
   }, [refresh]);
 
-  return { agents, loading, error, createAgent, renameAgent, updateSystemPrompt, deleteAgent, refresh };
+  return { agents, loading, error, createAgent, renameAgent, updateSystemPrompt, updateAgentConfig, deleteAgent, refresh };
 }

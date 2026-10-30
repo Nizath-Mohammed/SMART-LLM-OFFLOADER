@@ -16,7 +16,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 export function AgentsPage(): React.ReactElement {
   const { agentId } = useParams<{ agentId?: string }>();
   const navigate = useNavigate();
-  const { agents, loading, error, createAgent, renameAgent, updateSystemPrompt, deleteAgent } = useAgents();
+  const { agents, loading, error, createAgent, renameAgent, updateSystemPrompt, updateAgentConfig, deleteAgent } = useAgents();
   const { tasks, loading: tasksLoading, createTask } = useTasks(agentId ?? null);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -74,7 +74,12 @@ export function AgentsPage(): React.ReactElement {
           </div>
         ) : selectedAgent ? (
           <div className="max-w-3xl space-y-6">
-            <AgentDetail agent={selectedAgent} />
+            <AgentDetail
+              agent={selectedAgent}
+              onUpdateConfig={async (config) => {
+                await updateAgentConfig(selectedAgent.id, config);
+              }}
+            />
             <div className="flex gap-3">
               <button onClick={() => setRenamingAgentId(selectedAgent.id)} className="px-3 py-1.5 text-sm rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Rename</button>
               <button onClick={() => setEditingPromptAgentId(selectedAgent.id)} className="px-3 py-1.5 text-sm rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Edit Prompt</button>

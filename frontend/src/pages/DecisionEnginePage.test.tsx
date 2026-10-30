@@ -55,6 +55,7 @@ describe('DecisionEnginePage', () => {
       createAgent: vi.fn(),
       renameAgent: vi.fn(),
       updateSystemPrompt: vi.fn(),
+      updateAgentConfig: vi.fn(),
       deleteAgent: vi.fn(),
       refresh: vi.fn(),
     });

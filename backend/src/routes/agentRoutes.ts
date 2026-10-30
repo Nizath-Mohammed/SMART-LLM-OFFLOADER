@@ -60,6 +60,17 @@ router.patch('/:agentId/system-prompt', (req: Request, res: Response, next: Next
   }
 });
 
+// PATCH /agents/:agentId/config — Update agent model, quantization & optimizations
+router.patch('/:agentId/config', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { updateAgentConfig } = await import('../services/agentService');
+    const agent = updateAgentConfig(req.params.agentId, req.body);
+    res.status(200).json({ message: 'Agent configuration updated.', data: agent });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /agents/:agentId — Delete agent and all its tasks
 router.delete('/:agentId', (req: Request, res: Response, next: NextFunction) => {
   try {

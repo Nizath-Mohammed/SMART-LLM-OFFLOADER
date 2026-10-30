@@ -175,8 +175,43 @@ export function updateSystemPrompt(
   return rowToAgent({ ...existing, system_prompt: prompt });
 }
 
+export interface AgentOptimizationConfig {
+  modelRef?: string | null;
+  quantization?: string | null;
+  layerOffload?: boolean;
+  kvCacheOpt?: boolean;
+}
+
+/**
+ * Updates an agent's model and edge optimization configuration (quantization, layer offload, KV cache).
+ */
+export function updateAgentConfig(
+  agentId: string,
+  config: AgentOptimizationConfig
+): Agent {
+  const db = getDatabase();
+
+  const existing = db
+    .prepare('SELECT * FROM agents WHERE id = ?')
+    .get(agentId) as AgentRow | undefined;
+
+  if (!existing) {
+    throw new AppError(404, 'Agent not found.');
+  }
+
+  const modelRef = config.modelRef !== undefined ? config.modelRef : existing.model_ref;
+
+  db.prepare('UPDATE agents SET model_ref = ? WHERE id = ?').run(
+    modelRef,
+    agentId
+  );
+
+  return rowToAgent({ ...existing, model_ref: modelRef });
+}
+
 /**
  * Deletes an agent and all its associated tasks atomically.
+
  *
  * Throws 404 if the agent does not exist.
  * Throws 409 if the agent has any task with status 'running'.
