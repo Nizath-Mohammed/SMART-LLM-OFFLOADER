@@ -4,10 +4,44 @@ import { createTask, listTasksForAgent } from '../services/taskService';
 const router = Router();
 
 // POST /agents/:agentId/tasks — Assign a task to an agent
-router.post('/:agentId/tasks', (req: Request, res: Response, next: NextFunction) => {
+router.post('/:agentId/tasks', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const task = createTask(req.params.agentId, req.body);
-    res.status(201).json({ message: 'Task created successfully.', data: task });
+
+    // Trigger execution with Ollama immediately in the background
+    // Pick the agent's configured model or an available local model
+    (async () => {
+      try {
+        const { getDatabase } = await import('../db/database');
+        const { createAndRunExecution } = await import('../services/executionService');
+        const { listInstalledModels } = await import('../services/ollamaService');
+
+        const db = getDatabase();
+        const agent = db.prepare('SELECT model_ref, system_prompt FROM agents WHERE id = ?').get(req.params.agentId) as { model_ref?: string; system_prompt?: string } | undefined;
+
+        let modelToUse: string = agent?.model_ref || '';
+        if (!modelToUse) {
+          const installed = await listInstalledModels().catch(() => []);
+          if (installed && installed.length > 0) {
+            modelToUse = installed[0].name;
+          } else {
+            modelToUse = 'qwen2.5:1.5b';
+          }
+        }
+
+        await createAndRunExecution({
+          modelName: modelToUse,
+          prompt: req.body.prompt,
+          agentId: req.params.agentId,
+          taskId: task.id,
+          systemPrompt: agent?.system_prompt || undefined,
+        });
+      } catch (execErr) {
+        console.error('[Task Execution] Error executing task for agent:', execErr);
+      }
+    })();
+
+    res.status(201).json({ message: 'Task created successfully and queued for execution.', data: task });
   } catch (err) {
     next(err);
   }

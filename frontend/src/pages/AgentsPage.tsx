@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAgents } from '../hooks/useAgents';
+import { useTasks } from '../hooks/useTasks';
 import { AgentList } from '../components/agents/AgentList';
 import { AgentDetail } from '../components/agents/AgentDetail';
 import { CreateAgentForm } from '../components/agents/CreateAgentForm';
 import { RenameAgentModal } from '../components/agents/RenameAgentModal';
 import { EditSystemPromptModal } from '../components/agents/EditSystemPromptModal';
 import { DeleteAgentDialog } from '../components/agents/DeleteAgentDialog';
+import { TaskInput } from '../components/tasks/TaskInput';
+import { TaskHistoryList } from '../components/tasks/TaskHistoryList';
 import { ErrorNotification } from '../components/ui/ErrorNotification';
 import { EmptyState } from '../components/ui/EmptyState';
 
@@ -14,6 +17,7 @@ export function AgentsPage(): React.ReactElement {
   const { agentId } = useParams<{ agentId?: string }>();
   const navigate = useNavigate();
   const { agents, loading, error, createAgent, renameAgent, updateSystemPrompt, deleteAgent } = useAgents();
+  const { tasks, loading: tasksLoading, createTask } = useTasks(agentId ?? null);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [renamingAgentId, setRenamingAgentId] = useState<string | null>(null);
@@ -69,12 +73,33 @@ export function AgentsPage(): React.ReactElement {
             />
           </div>
         ) : selectedAgent ? (
-          <div className="max-w-2xl space-y-4">
+          <div className="max-w-3xl space-y-6">
             <AgentDetail agent={selectedAgent} />
             <div className="flex gap-3">
               <button onClick={() => setRenamingAgentId(selectedAgent.id)} className="px-3 py-1.5 text-sm rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Rename</button>
               <button onClick={() => setEditingPromptAgentId(selectedAgent.id)} className="px-3 py-1.5 text-sm rounded bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors">Edit Prompt</button>
               <button onClick={() => setDeletingAgentId(selectedAgent.id)} className="px-3 py-1.5 text-sm rounded bg-red-800 text-red-100 hover:bg-red-700 transition-colors">Delete</button>
+            </div>
+
+            {/* Direct Task Execution & History Panel */}
+            <div className="pt-4 border-t border-gray-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-md font-semibold text-white flex items-center gap-2">
+                  <span>⚡ Assign Task to {selectedAgent.name}</span>
+                </h3>
+              </div>
+              <TaskInput onSubmit={createTask} disabled={tasksLoading} />
+
+              <div className="pt-2">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Task Execution & Outputs History
+                </h4>
+                {tasksLoading && tasks.length === 0 ? (
+                  <p className="text-gray-500 text-sm">Loading tasks…</p>
+                ) : (
+                  <TaskHistoryList tasks={tasks} />
+                )}
+              </div>
             </div>
           </div>
         ) : (

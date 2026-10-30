@@ -40,6 +40,19 @@ export function useTasks(agentId: string | null) {
     refresh();
   }, [refresh]);
 
+  // Poll automatically every 2s if any task is pending or running
+  useEffect(() => {
+    if (!agentId) return;
+    const hasActiveTask = tasks.some((t) => t.status === 'pending' || t.status === 'running');
+    if (!hasActiveTask) return;
+
+    const interval = setInterval(() => {
+      refresh();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [agentId, tasks, refresh]);
+
   const createTask = async (prompt: string): Promise<void> => {
     if (agentId === null) {
       setError('No agent selected.');

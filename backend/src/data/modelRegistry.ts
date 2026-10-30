@@ -202,6 +202,49 @@ export const MODEL_REGISTRY: ModelRecord[] = [
     runtime: 'ollama',
     license: 'apache-2.0',
   },
+  {
+    name: 'Llama 3.3 70B Instruct',
+    huggingFaceRepo: 'bartowski/Llama-3.3-70B-Instruct-GGUF',
+    parametersBillions: 70,
+    format: 'GGUF',
+    quantVariants: [
+      { name: 'Q4_K_M', estimatedMemoryMB: 40000 },
+      { name: 'Q5_K_M', estimatedMemoryMB: 48000 },
+      { name: 'Q8_0', estimatedMemoryMB: 74000 },
+    ],
+    maxContextLength: 131072,
+    kvCacheMemoryMB: 2048,
+    runtime: 'ollama',
+    license: 'llama3.3',
+  },
+  {
+    name: 'Qwen 2.5 72B Instruct',
+    huggingFaceRepo: 'Qwen/Qwen2.5-72B-Instruct-GGUF',
+    parametersBillions: 72,
+    format: 'GGUF',
+    quantVariants: [
+      { name: 'Q4_K_M', estimatedMemoryMB: 41500 },
+      { name: 'Q5_K_M', estimatedMemoryMB: 50000 },
+    ],
+    maxContextLength: 131072,
+    kvCacheMemoryMB: 2048,
+    runtime: 'ollama',
+    license: 'apache-2.0',
+  },
+  {
+    name: 'Qwen 2.5 14B Instruct',
+    huggingFaceRepo: 'Qwen/Qwen2.5-14B-Instruct-GGUF',
+    parametersBillions: 14,
+    format: 'GGUF',
+    quantVariants: [
+      { name: 'Q4_K_M', estimatedMemoryMB: 8800 },
+      { name: 'Q5_K_M', estimatedMemoryMB: 10500 },
+    ],
+    maxContextLength: 131072,
+    kvCacheMemoryMB: 1024,
+    runtime: 'ollama',
+    license: 'apache-2.0',
+  },
 ];
 
 export function getModelRegistry(): ModelRecord[] {
