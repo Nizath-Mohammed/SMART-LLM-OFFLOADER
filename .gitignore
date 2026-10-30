@@ -35,3 +35,6 @@ Thumbs.db
 
 # Kiro
 .kiro/
+
+# Vite temporary timestamp files
+*.timestamp-*.mjs
