@@ -54,14 +54,20 @@ export function AgentDetail({ agent, onUpdateConfig }: AgentDetailProps): React.
 
   return (
     <div className="bg-[#121826]/90 rounded-2xl border border-gray-800 p-6 space-y-6 shadow-xl backdrop-blur-md">
-      <div className="flex items-center justify-between pb-4 border-b border-gray-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-800 gap-3">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>{agent.name}</span>
-          </h2>
-          <span className="text-xs text-gray-400 font-mono mt-0.5 block">{agent.id}</span>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white">{agent.name}</h2>
+            <StatusBadge status={agent.status} />
+          </div>
+          <span className="text-xs text-gray-500 font-mono mt-0.5 block">{agent.id}</span>
         </div>
-        <StatusBadge status={agent.status} />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Active Engine:</span>
+          <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-950/80 border border-cyan-500/50 text-cyan-300">
+            {agent.modelRef || 'Auto-fallback'}
+          </span>
+        </div>
       </div>
 
       {/* System Prompt View */}
