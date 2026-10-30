@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useHardware } from '../hooks/useHardware';
 import { useAgents } from '../hooks/useAgents';
 import { useRecommendation } from '../hooks/useRecommendation';
+import { useOllama } from '../hooks/useOllama';
 import { HardwarePanel } from '../components/decision/HardwarePanel';
 import { RecommendationForm } from '../components/decision/RecommendationForm';
 import { RecommendationPanel } from '../components/decision/RecommendationPanel';
@@ -10,6 +11,7 @@ import { ErrorNotification } from '../components/ui/ErrorNotification';
 export function DecisionEnginePage(): React.ReactElement {
   const { hardware, loading: hwLoading, error: hwError } = useHardware();
   const { agents } = useAgents();
+  const { models, startPull, activePull } = useOllama();
   const {
     recommendation,
     loading: recLoading,
@@ -64,6 +66,11 @@ export function DecisionEnginePage(): React.ReactElement {
       <RecommendationPanel
         recommendation={recommendation}
         error={recError}
+        installedModels={models}
+        onDownloadModel={async (modelName) => {
+          await startPull(modelName);
+        }}
+        activePull={activePull}
       />
     </div>
   );

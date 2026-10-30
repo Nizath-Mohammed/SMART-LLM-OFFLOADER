@@ -1,10 +1,12 @@
-import React from 'react';
-import { Recommendation, ConfidenceLevel } from '../../types/index';
+import { Recommendation, ConfidenceLevel, PullProgress, OllamaModel } from '../../types/index';
 import { EmptyState } from '../ui/EmptyState';
 
 interface RecommendationPanelProps {
   recommendation: Recommendation | null;
   error?: string | null;
+  installedModels?: OllamaModel[];
+  onDownloadModel?: (modelName: string) => Promise<void>;
+  activePull?: PullProgress | null;
 }
 
 function ConfidenceBadge({ level }: { level: ConfidenceLevel }): React.ReactElement {
@@ -62,12 +64,42 @@ function ComplexityPill({ complexity }: { complexity: string }): React.ReactElem
 
 export function RecommendationPanel({
   recommendation,
+  installedModels = [],
+  onDownloadModel,
+  activePull,
 }: RecommendationPanelProps): React.ReactElement {
   if (!recommendation) {
     return (
       <EmptyState message="No recommendation generated yet. Submit a task prompt above to analyze requirements and receive model suggestions." />
     );
   }
+
+  // Convert human-readable model name to standard Ollama tag (e.g. 'Llama 3.2 1B' -> 'llama3.2:1b')
+  const rawModel = recommendation.recommendedModel.toLowerCase();
+  let cleanModelName = rawModel;
+  if (rawModel.includes('llama 3.2 1b') || rawModel.includes('llama-3.2-1b')) cleanModelName = 'llama3.2:1b';
+  else if (rawModel.includes('llama 3.2 3b') || rawModel.includes('llama-3.2-3b')) cleanModelName = 'llama3.2:3b';
+  else if (rawModel.includes('llama 3.1 8b') || rawModel.includes('llama-3.1-8b')) cleanModelName = 'llama3.1:8b';
+  else if (rawModel.includes('llama 3.3 70b') || rawModel.includes('llama-3.3-70b')) cleanModelName = 'llama3.3:70b';
+  else if (rawModel.includes('qwen 2.5 72b') || rawModel.includes('qwen2.5:72b')) cleanModelName = 'qwen2.5:72b';
+  else if (rawModel.includes('qwen 2.5 14b') || rawModel.includes('qwen2.5:14b')) cleanModelName = 'qwen2.5:14b';
+  else if (rawModel.includes('qwen2.5 0.5b') || rawModel.includes('qwen 2.5 0.5b')) cleanModelName = 'qwen2.5:0.5b';
+  else if (rawModel.includes('qwen') && rawModel.includes('1.5b')) cleanModelName = 'qwen2.5:1.5b';
+  else if (rawModel.includes('tinyllama')) cleanModelName = 'tinyllama:latest';
+  else if (rawModel.includes('phi-3.5') || rawModel.includes('phi 3.5')) cleanModelName = 'phi3.5:latest';
+
+  const isAlreadyInstalled = installedModels.some(
+    (m) => m.name.toLowerCase().includes(cleanModelName) || cleanModelName.includes(m.name.toLowerCase())
+  );
+
+  const isPullingThisModel =
+    Boolean(
+      activePull &&
+      activePull.status !== 'completed' &&
+      activePull.status !== 'failed' &&
+      activePull.status !== 'cancelled' &&
+      activePull.model?.toLowerCase().includes(cleanModelName)
+    );
 
   return (
     <div className="rounded-xl border border-gray-700/80 bg-gray-800 p-6 shadow-lg flex flex-col gap-6">
@@ -119,16 +151,53 @@ export function RecommendationPanel({
 
       {/* Grid of Key Recommendation Specifications */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Recommended Model */}
-        <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 p-4">
-          <span className="text-xs font-medium text-gray-400">Recommended Model</span>
-          <p className="text-lg font-bold text-gray-100 mt-1">
-            {recommendation.recommendedModel}
-          </p>
+        {/* Recommended Model & Download Action */}
+        <div className="rounded-xl bg-gray-900/60 border border-gray-700/50 p-4 flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-medium text-gray-400">Recommended Model</span>
+            <p className="text-lg font-bold text-gray-100 mt-1">
+              {recommendation.recommendedModel}
+            </p>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-gray-800">
+            {isAlreadyInstalled ? (
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                <span>✓ Installed & Ready in Ollama</span>
+              </div>
+            ) : isPullingThisModel ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-indigo-400 font-semibold animate-pulse">
+                    Downloading {activePull?.status || 'in progress'}...
+                  </span>
+                  <span className="text-gray-400 font-mono">
+                    {activePull?.percent !== undefined ? `${activePull.percent}%` : ''}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${activePull?.percent !== undefined ? Math.min(activePull.percent, 100) : 40}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onDownloadModel && onDownloadModel(cleanModelName)}
+                className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
+              >
+                <span>📥 Download Model to Local Engine</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Quantization Variant */}
-        <div className="rounded-lg bg-gray-900/60 border border-gray-700/50 p-4">
+        <div className="rounded-xl bg-gray-900/60 border border-gray-700/50 p-4">
           <span className="text-xs font-medium text-gray-400">Quantization Variant</span>
           <p className="text-lg font-bold text-gray-100 mt-1">
             {recommendation.recommendedQuantization ?? (
